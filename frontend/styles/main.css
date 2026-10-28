@@ -249,8 +249,22 @@ body {
   flex-direction: column;
   z-index: 50;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  overflow: hidden; /* Catalog section tự scroll riêng */
+  overflow-y: auto; /* Cho phép scroll toàn sidebar */
+  overflow-x: hidden;
 }
+
+/* Scrollbar mỏng cho sidebar */
+.sidebar::-webkit-scrollbar {
+  width: 3px;
+}
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+}
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.25);
+}
+
 
 
 .sidebar.collapsed {
@@ -666,14 +680,15 @@ input:checked + .switch-slider:before {
    R2 CATALOG SECTION
    ============================================================================== */
 .sidebar-section-catalog {
-  flex: 1;
-  min-height: 180px; /* Đảm bảo catalog section luôn có chiều cao tối thiểu */
+  flex-shrink: 0; /* Không bị ép nhỏ */
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  padding: 20px 20px 0 20px;
+  padding: 16px 20px 20px 20px;
+  border-top: 1px solid var(--border-glass);
   border-bottom: none;
+  min-height: 0;
 }
+
 
 
 .catalog-count-badge {
@@ -750,14 +765,15 @@ input:checked + .switch-slider:before {
 }
 
 .catalog-list {
-  flex: 1;
+  max-height: 240px;       /* Giới hạn chiều cao, có scroll riêng */
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding-bottom: 16px;
+  padding-bottom: 4px;
   padding-right: 2px;
 }
+
 
 .catalog-list::-webkit-scrollbar {
   width: 4px;
