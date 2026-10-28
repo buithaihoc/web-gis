@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hà Nội Satellite WebGIS | Microsoft Planetary Computer &amp; Cloudflare R2</title>
+  <meta name="description" content="Hệ thống WebGIS giám sát ảnh vệ tinh Sentinel-2 Hà Nội trên nền tảng Microsoft Planetary Computer và Cloudflare R2">
+
+  <!-- OpenLayers v10 CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.4.0/ol.css">
+  <script src="https://cdn.jsdelivr.net/npm/ol@v10.4.0/dist/ol.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="/static/styles/main.css">
+</head>
+<body>
+
+  <!-- ================= TOPBAR ================= -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">🛰️</div>
+      <div>
+        <div class="brand-title">HANOI SATELLITE WEBGIS</div>
+        <div class="brand-subtitle">MPC + Cloudflare R2 + TiTiler</div>
+      </div>
+    </div>
+
+    <div class="topbar-controls">
+      <!-- Date Picker -->
+      <div class="control-pill" title="Chọn ngày chụp vệ tinh (Sentinel-2 chu kỳ ~5 ngày)">
+        <i data-lucide="calendar" style="width: 16px; height: 16px; color: var(--accent-cyan);"></i>
+        <input type="date" id="date-input" list="available-dates-list" value="2026-10-09">
+        <datalist id="available-dates-list"></datalist>
+      </div>
+
+      <!-- Cloud Cover Filter -->
+      <div class="control-pill" title="Lọc tỷ lệ mây tối đa">
+        <i data-lucide="cloud" style="width: 16px; height: 16px; color: var(--accent-cyan);"></i>
+        <select id="cloud-select">
+          <option value="20">Mây &lt; 20%</option>
+          <option value="40" selected>Mây &lt; 40%</option>
+          <option value="60">Mây &lt; 60%</option>
+          <option value="80">Mây &lt; 80%</option>
+        </select>
+      </div>
+
+      <!-- Nút Tải từ MPC (xử lý mới từ Microsoft Planetary Computer) -->
+      <button id="btn-load-imagery" class="btn-fetch" title="Tra cứu và tải ảnh từ Microsoft Planetary Computer">
+        <i data-lucide="satellite" style="width: 16px; height: 16px;"></i>
+        <span>Tải từ MPC</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= DATE ALERT BANNER ================= -->
+  <!--
+    Hiển thị thông báo khi ngày ảnh trả về KHÁC ngày người dùng chọn,
+    hoặc khi độ mây vượt ngưỡng yêu cầu.
+  -->
+  <div id="date-alert-banner" class="date-alert-banner" style="display:none;">
+    <i data-lucide="calendar-x" id="date-alert-icon" style="width:15px;height:15px;flex-shrink:0;"></i>
+    <span id="date-alert-text"></span>
+    <button class="date-alert-close" onclick="document.getElementById('date-alert-banner').style.display='none'">
+      <i data-lucide="x" style="width:13px;height:13px;"></i>
+    </button>
+  </div>
+
+  <!-- ================= MAIN WORKSPACE ================= -->
+  <main class="workspace">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="sidebar">
+
+      <!-- Section: Sản phẩm viễn thám -->
+      <div class="sidebar-section">
+        <div class="section-title">
+          <i data-lucide="layers" style="width: 16px; height: 16px;"></i>
+          <span>Sản phẩm viễn thám</span>
+        </div>
+        <div class="mode-selector">
+          <button id="mode-rgb" class="mode-btn active" data-mode="rgb">
+            <span class="emoji">🌈</span>
+            <span>Màu tự nhiên</span>
+          </button>
+          <button id="mode-ndvi" class="mode-btn" data-mode="ndvi">
+            <span class="emoji">🌿</span>
+            <span>Chỉ số NDVI</span>
+          </button>
+        </div>
+
+        <!-- Opacity Slider -->
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Độ trong suốt</span>
+            <span id="opacity-val" class="val">100%</span>
+          </div>
+          <input type="range" id="opacity-slider" min="0" max="100" value="100">
+        </div>
+      </div>
+
+      <!-- Section: Bản đồ nền & Ranh giới -->
+      <div class="sidebar-section">
+        <div class="section-title">
+          <i data-lucide="map" style="width: 16px; height: 16px;"></i>
+          <span>Lớp bản đồ nền</span>
+        </div>
+
+        <div class="toggle-row">
+          <span>Bản đồ nền</span>
+          <select id="basemap-select" class="control-pill" style="padding: 4px 8px;">
+            <option value="dark" selected>CartoDB Dark</option>
+            <option value="osm">OpenStreetMap</option>
+            <option value="satellite">Esri Satellite</option>
+          </select>
+        </div>
+
+        <div class="toggle-row">
+          <span>Ranh giới Hà Nội</span>
+          <label class="switch">
+            <input type="checkbox" id="boundary-toggle" checked>
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Section: Thông số cảnh ảnh hiện tại -->
+      <div class="sidebar-section">
+        <div class="section-title">
+          <i data-lucide="info" style="width: 16px; height: 16px;"></i>
+          <span>Thông số cảnh ảnh</span>
+        </div>
+
+        <div class="metadata-grid">
+          <div class="meta-item">
+            <div class="meta-label">Trạng thái Cache</div>
+            <div id="meta-cache" class="meta-value">
+              <span class="badge-hit">✓ R2 Cache</span>
+            </div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Ngày chụp thực tế</div>
+            <div id="meta-date" class="meta-value">--</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Độ che phủ mây</div>
+            <div id="meta-cloud" class="meta-value">-- %</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Độ phân giải</div>
+            <div class="meta-value">10 mét</div>
+          </div>
+          <div class="meta-item" style="grid-column: span 2;">
+            <div class="meta-label">Dung lượng COG</div>
+            <div id="meta-size" class="meta-value">-- MB</div>
+          </div>
+        </div>
+
+        <!-- Nút tải GeoTIFF -->
+        <button id="btn-download-cog" class="btn-download" disabled>
+          <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+          <span>Tải file GeoTIFF (COG)</span>
+        </button>
+      </div>
+
+      <!-- Section: R2 Catalog - Ảnh đã lưu trên Cloudflare R2 -->
+      <div class="sidebar-section sidebar-section-catalog">
+        <div class="section-title" style="justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="database" style="width: 16px; height: 16px;"></i>
+            <span>Kho ảnh R2</span>
+            <span id="r2-catalog-count" class="catalog-count-badge">0</span>
+          </div>
+          <button id="btn-refresh-catalog" class="catalog-refresh-btn" title="Tải lại danh sách">
+            <i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i>
+          </button>
+        </div>
+
+        <!-- Filter buttons -->
+        <div class="r2-filter-row">
+          <button class="r2-filter-btn active" data-filter="all">Tất cả</button>
+          <button class="r2-filter-btn" data-filter="rgb">🌈 RGB</button>
+          <button class="r2-filter-btn" data-filter="ndvi">🌿 NDVI</button>
+        </div>
+
+        <!-- Loading state -->
+        <div id="r2-catalog-loading" class="catalog-loading">
+          <i data-lucide="loader" class="animate-spin" style="width:16px;height:16px;opacity:0.5;"></i>
+          <span>Đang tải danh sách...</span>
+        </div>
+
+        <!-- Empty state -->
+        <div id="r2-catalog-empty" class="catalog-empty" style="display:none;">
+          <i data-lucide="inbox" style="width:20px;height:20px;opacity:0.4;"></i>
+          <span>Chưa có ảnh nào trên R2</span>
+        </div>
+
+        <!-- Catalog list -->
+        <div id="r2-catalog-list" class="catalog-list"></div>
+      </div>
+
+    </aside>
+
+    <!-- SIDEBAR TOGGLE BUTTON -->
+    <button id="sidebar-toggle" class="sidebar-toggle-btn" title="Thu gọn / Mở rộng bảng điều khiển">
+      <i data-lucide="chevron-left" id="sidebar-toggle-icon" style="width: 20px; height: 20px;"></i>
+    </button>
+
+    <!-- MAP CONTAINER -->
+    <div id="map-container"></div>
+
+    <!-- MAP FLOATING ACTIONS -->
+    <div class="map-actions">
+      <button id="btn-reset-view" class="action-btn" title="Về toàn cảnh Hà Nội">
+        <i data-lucide="focus" style="width: 18px; height: 18px;"></i>
+      </button>
+      <button id="btn-fullscreen" class="action-btn" title="Xem toàn màn hình">
+        <i data-lucide="maximize" style="width: 18px; height: 18px;"></i>
+      </button>
+    </div>
+
+    <!-- FLOATING PROGRESS CARD -->
+    <div id="progress-card" class="progress-card" style="display:none;">
+      <div class="progress-header">
+        <div class="progress-title">
+          <i data-lucide="loader" id="progress-spinner-icon" class="animate-spin" style="width: 18px; height: 18px; color: var(--accent-cyan);"></i>
+          <span id="progress-title-text">Đang xử lý ảnh vệ tinh...</span>
+        </div>
+        <div id="progress-percent" class="progress-percent">0%</div>
+      </div>
+      <div class="progress-bar-bg">
+        <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%;"></div>
+      </div>
+      <div id="progress-status" class="progress-status">Đang chuẩn bị kết nối Microsoft Planetary Computer...</div>
+      <div class="progress-hint">
+        <i data-lucide="sparkles" style="width: 13px; height: 13px; color: #38bdf8; flex-shrink: 0;"></i>
+        <span>Quy trình: Tra cứu STAC → Ghép đa mảnh → Nén COG → Cloudflare R2</span>
+      </div>
+    </div>
+
+    <!-- COORDINATE BAR -->
+    <div id="coordinate-bar" class="coordinate-bar">
+      105.8342°E, 21.0278°N | Zoom: 10
+    </div>
+
+  </main>
+
+  <!-- Application Logic -->
+  <script src="/static/src/app.js"></script>
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

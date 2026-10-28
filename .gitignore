@@ -1,0 +1,37 @@
+# Environments
+.venv/
+env/
+venv/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Environment secrets
+.env
+.env.local
+
+# Database & SQLite
+*.db
+*.sqlite3
+data/webgis.db
+
+# Temporary raster data
+data/temp/*
+!data/temp/.gitkeep
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Node / Frontend
+node_modules/
+dist/
+build/
