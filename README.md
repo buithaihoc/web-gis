@@ -7,7 +7,8 @@ Hệ thống WebGIS viễn thám hiện đại phục vụ tìm kiếm, xử lý
 
 ## 📑 Tài liệu chi tiết dự án
 
-- 📐 **[Kiến trúc hệ thống chuẩn (Architecture Document)](docs/ARCHITECTURE.md)**: Chi tiết luồng Cache HIT/MISS, sơ đồ tương tác thành phần, thiết kế lưu trữ R2 và bảo mật.
+- 📐 **[Kiến trúc hệ thống chuẩn v2.0 (Architecture v2)](docs/ARCHITECTURE_V2.md)**: Tổng hợp kiến trúc mới nhất, sơ đồ 4 tầng, Docker topology, luồng Cache HIT/MISS, xử lý ghép Mosaic 2 mảnh và Smart Date Picker.
+- 📐 **[Kiến trúc hệ thống ban đầu v1.0](docs/ARCHITECTURE.md)**: Bản đặc tả kiến trúc gốc giai đoạn đầu.
 - 📋 **[Kế hoạch triển khai 5 giai đoạn (Implementation Plan)](docs/IMPLEMENTATION_PLAN.md)**: Lộ trình từng bước, tiêu chí kiểm thử nghiệm thu.
 - 👤 **[Đặc tả yêu cầu & Chức năng người dùng (User Requirements)](docs/USER_REQUIREMENTS.md)**: Chi tiết 5 nhóm chức năng từ góc nhìn người dùng cuối, bố cục wireframe và kịch bản tương tác.
 

@@ -404,9 +404,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const sectionProgress = document.getElementById("download-progress-section");
 
   // Form inputs
-  const dlDateInput   = document.getElementById("dl-date-input");
-  const dlCloudSelect = document.getElementById("dl-cloud-select");
-  const btnSearch     = document.getElementById("btn-search-scene");
+  const dlDateInput       = document.getElementById("dl-date-input");
+  const dlQuickDateSelect = document.getElementById("dl-quick-date-select");
+  const dlCloudSelect     = document.getElementById("dl-cloud-select");
+  const dlCalendarIcon    = document.getElementById("dl-calendar-icon");
+  const btnSearch         = document.getElementById("btn-search-scene");
 
   // Preview elements
   const scenePreviewCard  = document.getElementById("scene-preview-card");
@@ -434,7 +436,63 @@ document.addEventListener("DOMContentLoaded", () => {
   let progAnimTimer   = null;
 
   // Set today as default date
-  dlDateInput.value = new Date().toISOString().slice(0, 10);
+  if (dlDateInput) {
+    dlDateInput.value = new Date().toISOString().slice(0, 10);
+
+    // Mở hộp thoại chọn ngày trực quan khi click vào input
+    dlDateInput.addEventListener("click", () => {
+      try {
+        if (typeof dlDateInput.showPicker === "function") {
+          dlDateInput.showPicker();
+        }
+      } catch (e) {}
+    });
+
+    dlDateInput.addEventListener("change", () => {
+      if (!dlDateInput.value) return;
+      if (dlQuickDateSelect) {
+        dlQuickDateSelect.value = dlDateInput.value;
+      }
+      const parts = dlDateInput.value.split("-");
+      if (parts.length >= 2) {
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10);
+        if (`${y}-${m}` !== currentLoadedYearMonth) {
+          loadAvailableDates(y, m);
+        }
+      }
+    });
+  }
+
+  if (dlCalendarIcon && dlDateInput) {
+    dlCalendarIcon.addEventListener("click", (e) => {
+      e.stopPropagation();
+      try {
+        if (typeof dlDateInput.showPicker === "function") {
+          dlDateInput.showPicker();
+        } else {
+          dlDateInput.focus();
+        }
+      } catch (e) {
+        dlDateInput.focus();
+      }
+    });
+  }
+
+  if (dlQuickDateSelect && dlDateInput) {
+    dlQuickDateSelect.addEventListener("change", () => {
+      if (dlQuickDateSelect.value) {
+        dlDateInput.value = dlQuickDateSelect.value;
+        toast(`Đã chọn ngày bay: ${dlQuickDateSelect.value}`, "info");
+      }
+    });
+  }
+
+  if (dlCloudSelect) {
+    dlCloudSelect.addEventListener("change", () => {
+      loadAvailableDates();
+    });
+  }
 
   // Render the download tab state
   function setDownloadState(state) {
@@ -767,37 +825,83 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // 11. GỢI Ý NGÀY CÓ SẴN (STAC calendar / datalist)
+  // 11. GỢI Ý NGÀY CÓ SẴN (STAC calendar & Quick Selector)
   // ═══════════════════════════════════════════════════════════════════
 
-  async function loadAvailableDates() {
-    try {
-      const today = new Date();
-      const res = await fetch(`/api/imagery/dates?year=${today.getFullYear()}&month=${today.getMonth() + 1}&max_cloud=40`);
-      if (!res.ok) return;
-      const data = await res.json();
-      if (!data.dates || data.dates.length === 0) return;
+  let currentLoadedYearMonth = "";
 
-      const datalist = document.getElementById("available-dates-list");
-      if (datalist) {
-        datalist.innerHTML = "";
+  async function loadAvailableDates(forceYear, forceMonth) {
+    try {
+      const dateVal = dlDateInput ? dlDateInput.value : "";
+      let targetDate = new Date();
+      if (dateVal && !isNaN(new Date(dateVal).getTime())) {
+        targetDate = new Date(dateVal);
+      }
+      const year = forceYear || targetDate.getFullYear();
+      const month = forceMonth || (targetDate.getMonth() + 1);
+      const cloudLimit = dlCloudSelect ? dlCloudSelect.value : 40;
+
+      if (dlQuickDateSelect) {
+        dlQuickDateSelect.innerHTML = `<option value="">⏳ Đang quét ngày bay tháng ${month}/${year}...</option>`;
+      }
+
+      const res = await fetch(`/api/imagery/dates?year=${year}&month=${month}&max_cloud=${cloudLimit}`);
+      if (!res.ok) {
+        if (dlQuickDateSelect) {
+          dlQuickDateSelect.innerHTML = `<option value="">-- Không thể tải danh sách ngày bay --</option>`;
+        }
+        return;
+      }
+      const data = await res.json();
+      currentLoadedYearMonth = `${year}-${month}`;
+
+      if (!data.dates || data.dates.length === 0) {
+        if (dlQuickDateSelect) {
+          dlQuickDateSelect.innerHTML = `<option value="">-- Không có ngày bay nào trong tháng ${month}/${year} --</option>`;
+        }
+        const countSpan = document.getElementById("quick-date-count");
+        if (countSpan) countSpan.textContent = "0 ngày";
+        return;
+      }
+
+      const countSpan = document.getElementById("quick-date-count");
+      if (countSpan) {
+        countSpan.textContent = `${data.dates.length} ngày`;
+      }
+
+      if (dlQuickDateSelect) {
+        dlQuickDateSelect.innerHTML = "";
+        const defaultOpt = document.createElement("option");
+        defaultOpt.value = "";
+        defaultOpt.textContent = `⚡ Chọn nhanh (${data.dates.length} ngày bay trong tháng ${month}/${year})`;
+        dlQuickDateSelect.appendChild(defaultOpt);
+
         data.dates.forEach(d => {
           const opt = document.createElement("option");
           opt.value = d.date;
-          opt.label = `${d.date} · Mây ${d.cloud_cover}% ${d.is_cached ? '💾 R2' : ''}`;
-          datalist.appendChild(opt);
+          const cachedTag = d.is_cached ? " · 💾 Đã lưu R2" : "";
+          const cloudTag = `Mây ${d.cloud_cover}%`;
+          opt.textContent = `${d.date} (${cloudTag}${cachedTag})`;
+          if (dlDateInput && dlDateInput.value === d.date) {
+            opt.selected = true;
+          }
+          dlQuickDateSelect.appendChild(opt);
         });
       }
 
-      // Pre-fill với ngày sạch nhất nếu có
+      // Nếu người dùng chưa chọn ngày hoặc đang dùng ngày hôm nay (có thể không có ảnh), ưu tiên chọn ngày ít mây nhất
       const cleanPool = data.dates.filter(d => d.within_cloud_limit);
       const pool = cleanPool.length > 0 ? cleanPool : data.dates;
       const best = [...pool].sort((a, b) => a.cloud_cover - b.cloud_cover)[0];
-      if (best && dlDateInput) {
+      if (best && dlDateInput && (!dlDateInput.value || dlDateInput.value === new Date().toISOString().slice(0, 10))) {
         dlDateInput.value = best.date;
+        if (dlQuickDateSelect) dlQuickDateSelect.value = best.date;
       }
     } catch (err) {
       console.warn("Không tải được ngày gợi ý:", err);
+      if (dlQuickDateSelect) {
+        dlQuickDateSelect.innerHTML = `<option value="">-- Lỗi kết nối STAC --</option>`;
+      }
     }
   }
 

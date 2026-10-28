@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.4.0/ol.css">
   <script src="https://cdn.jsdelivr.net/npm/ol@v10.4.0/dist/ol.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="/static/styles/main.css?v=3.2">
+  <link rel="stylesheet" href="/static/styles/main.css?v=3.3">
 </head>
 <body>
 
@@ -230,12 +230,23 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label">Ngày muốn xem</label>
-              <div class="input-with-icon">
-                <i data-lucide="calendar" style="width:14px;height:14px;color:var(--cyan);"></i>
-                <input type="date" id="dl-date-input" class="form-input" list="available-dates-list">
-                <datalist id="available-dates-list"></datalist>
+              <label class="form-label" for="dl-date-input">Ngày muốn xem (Chọn từ lịch)</label>
+              <div class="input-with-icon" id="dl-date-wrap">
+                <i data-lucide="calendar" id="dl-calendar-icon" style="width:14px;height:14px;color:var(--cyan);cursor:pointer;" title="Mở lịch chọn ngày"></i>
+                <input type="date" id="dl-date-input" class="form-input" title="Nhấp để mở lịch chọn ngày cụ thể">
               </div>
+            </div>
+
+            <div class="form-group" style="margin-top:-3px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <label class="form-label" for="dl-quick-date-select" style="margin-bottom:0; font-size:0.7rem; color:var(--txt-muted);">
+                  ⚡ Gợi ý ngày bay Sentinel-2 trong tháng:
+                </label>
+                <span id="quick-date-count" style="font-size:0.65rem; color:var(--txt-dim); font-family:var(--mono);"></span>
+              </div>
+              <select id="dl-quick-date-select" class="form-input quick-date-select">
+                <option value="">-- Đang quét ngày bay trên STAC... --</option>
+              </select>
             </div>
 
             <div class="form-group">
@@ -358,7 +369,7 @@
   <!-- Toast container -->
   <div id="toast-container"></div>
 
-  <script src="/static/src/app.js?v=3.2"></script>
+  <script src="/static/src/app.js?v=3.3"></script>
   <script>lucide.createIcons();</script>
 </body>
 </html>
