@@ -194,43 +194,55 @@ select, input { font-family: var(--font); }
    WORKSPACE (MAIN LAYOUT)
    ============================================================================= */
 .workspace {
-  flex: 1;
+  flex: 1 1 0%;
   display: flex;
   flex-direction: row;
   overflow: hidden;
   position: relative;
   min-height: 0;
+  width: 100%;
+  height: 100%;
 }
 
 /* =============================================================================
    PANELS (Left & Right)
    ============================================================================= */
 .panel {
-  flex-shrink: 0;
+  width: var(--panel-w);
+  min-width: 0;
+  flex: 0 0 var(--panel-w);
+  height: 100%;
   background: var(--bg-panel);
-  border: none;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: width 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), flex-basis 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   z-index: 10;
-  width: var(--panel-w);
+  box-sizing: border-box;
 }
 
 .panel-left  { border-right: 1px solid var(--border); }
 .panel-right { border-left:  1px solid var(--border); }
 
-.panel.collapsed { width: 0; }
+.panel.collapsed {
+  width: 0 !important;
+  flex-basis: 0 !important;
+  border-right: none !important;
+  border-left: none !important;
+}
 
 /* The inner content has fixed width so it doesn't reflow during animation */
 .panel-content {
   width: var(--panel-w);
+  min-width: var(--panel-w);
+  max-width: var(--panel-w);
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .panel-content::-webkit-scrollbar { width: 3px; }
@@ -277,52 +289,55 @@ select, input { font-family: var(--font); }
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 20;
-  width: 20px;
-  height: 52px;
-  background: var(--bg-panel);
+  z-index: 25;
+  width: 22px;
+  height: 54px;
+  background: rgba(13, 17, 28, 0.96);
   border: 1px solid var(--border-mid);
   color: var(--txt-muted);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  outline: none;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1), right 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s, color 0.2s, border-color 0.2s;
 }
 
 .left-toggle {
   left: var(--panel-w);
   border-left: none;
   border-radius: 0 var(--r-sm) var(--r-sm) 0;
-  transition: left 0.32s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s, color 0.2s;
 }
 
 .right-toggle {
   right: var(--panel-w);
   border-right: none;
   border-radius: var(--r-sm) 0 0 var(--r-sm);
-  transition: right 0.32s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s, color 0.2s;
 }
 
 .panel-toggle-btn:hover {
-  background: rgba(56,189,248,0.08);
+  background: rgba(56, 189, 248, 0.15);
   color: var(--cyan);
   border-color: var(--border-active);
 }
 
 /* Collapsed state via JS class on workspace */
-.workspace.left-collapsed  .left-toggle  { left: 0; }
-.workspace.right-collapsed .right-toggle { right: 0; }
+.workspace.left-collapsed  .left-toggle  { left: 0 !important; }
+.workspace.right-collapsed .right-toggle { right: 0 !important; }
 
 
 /* =============================================================================
    MAP CONTAINER
    ============================================================================= */
 #map-container {
-  flex: 1;
+  flex: 1 1 0%;
   min-width: 0;
+  height: 100%;
   position: relative;
   background: #060911;
+  overflow: hidden;
 }
 
 .map-actions {
@@ -332,13 +347,13 @@ select, input { font-family: var(--font); }
   display: flex;
   flex-direction: column;
   gap: 6px;
-  z-index: 5;
+  z-index: 15;
 }
 
 .map-btn {
   width: 34px;
   height: 34px;
-  background: rgba(8,12,21,0.85);
+  background: rgba(8, 12, 21, 0.9);
   border: 1px solid var(--border-mid);
   backdrop-filter: blur(10px);
   border-radius: var(--r-sm);
@@ -346,28 +361,32 @@ select, input { font-family: var(--font); }
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   transition: all 0.18s;
 }
 
 .map-btn:hover {
   border-color: var(--cyan);
   color: var(--cyan);
-  background: rgba(56,189,248,0.08);
+  background: rgba(56, 189, 248, 0.12);
 }
 
 .coord-bar {
   position: absolute;
   bottom: 10px;
   right: 10px;
-  background: rgba(8,12,21,0.82);
+  background: rgba(8, 12, 21, 0.88);
   border: 1px solid var(--border);
-  backdrop-filter: blur(8px);
-  padding: 3px 10px;
+  backdrop-filter: blur(10px);
+  padding: 4px 12px;
   border-radius: 9999px;
   font-family: var(--mono);
-  font-size: 0.7rem;
-  color: var(--txt-dim);
-  z-index: 5;
+  font-size: 0.72rem;
+  color: var(--txt-muted);
+  z-index: 15;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* =============================================================================
@@ -1103,5 +1122,9 @@ input:checked + .sw-track::before { transform: translateX(16px); }
 }
 
 /* OpenLayers overrides */
+.ol-viewport { overflow: hidden !important; }
 .ol-control { background: transparent !important; }
-.ol-zoom { display: none; } /* Use custom map controls */
+.ol-zoom { display: none !important; }
+.ol-attribution { display: none !important; }
+.ol-rotate { display: none !important; }
+

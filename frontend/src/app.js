@@ -82,16 +82,16 @@ document.addEventListener("DOMContentLoaded", () => {
   function collapseLeft(collapsed) {
     panelLeft.classList.toggle("collapsed", collapsed);
     workspace.classList.toggle("left-collapsed", collapsed);
-    toggleLeftIco.setAttribute("data-lucide", collapsed ? "chevron-right" : "chevron-left");
-    lucide.createIcons();
+    toggleLeft.innerHTML = `<i data-lucide="${collapsed ? 'chevron-right' : 'chevron-left'}" id="toggle-left-icon" style="width:16px;height:16px;"></i>`;
+    if (window.lucide) lucide.createIcons();
     setTimeout(() => map.updateSize(), 340);
   }
 
   function collapseRight(collapsed) {
     panelRight.classList.toggle("collapsed", collapsed);
     workspace.classList.toggle("right-collapsed", collapsed);
-    toggleRightIco.setAttribute("data-lucide", collapsed ? "chevron-left" : "chevron-right");
-    lucide.createIcons();
+    toggleRight.innerHTML = `<i data-lucide="${collapsed ? 'chevron-left' : 'chevron-right'}" id="toggle-right-icon" style="width:16px;height:16px;"></i>`;
+    if (window.lucide) lucide.createIcons();
     setTimeout(() => map.updateSize(), 340);
   }
 
@@ -180,27 +180,27 @@ document.addEventListener("DOMContentLoaded", () => {
   // 6. DATE ALERT BANNER
   // ═══════════════════════════════════════════════════════════════════
 
-  const dateBanner     = document.getElementById("date-alert-banner");
-  const dateBannerIcon = document.getElementById("date-alert-icon");
-  const dateBannerText = document.getElementById("date-alert-text");
+  const dateBanner         = document.getElementById("date-alert-banner");
+  const dateBannerIconWrap = document.getElementById("date-alert-icon-wrap");
+  const dateBannerText     = document.getElementById("date-alert-text");
 
   function showDateBanner(data) {
     if (!data || (!data.date_info_message && !data.cloud_warning)) { hideDateBanner(); return; }
     dateBanner.style.display = "flex";
     if (data.date_match_status === "nearest") {
       dateBanner.className = "date-alert-banner date-alert-nearest";
-      dateBannerIcon.setAttribute("data-lucide", "calendar-x");
+      if (dateBannerIconWrap) dateBannerIconWrap.innerHTML = `<i data-lucide="calendar-x" style="width:14px;height:14px;"></i>`;
       dateBannerText.textContent = data.date_info_message || "";
     } else if (data.cloud_warning) {
       dateBanner.className = "date-alert-banner date-alert-cloud";
-      dateBannerIcon.setAttribute("data-lucide", "cloud-alert");
+      if (dateBannerIconWrap) dateBannerIconWrap.innerHTML = `<i data-lucide="cloud-alert" style="width:14px;height:14px;"></i>`;
       dateBannerText.textContent = data.cloud_warning;
     } else {
       dateBanner.className = "date-alert-banner date-alert-exact";
-      dateBannerIcon.setAttribute("data-lucide", "calendar-check");
+      if (dateBannerIconWrap) dateBannerIconWrap.innerHTML = `<i data-lucide="calendar-check" style="width:14px;height:14px;"></i>`;
       dateBannerText.textContent = data.date_info_message || "Ảnh đúng ngày yêu cầu";
     }
-    lucide.createIcons();
+    if (window.lucide) lucide.createIcons();
   }
 
   function hideDateBanner() {
@@ -414,7 +414,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnCancelDownload = document.getElementById("btn-cancel-download");
 
   // Progress elements
-  const progIcon       = document.getElementById("prog-icon");
+  const progIconWrap   = document.getElementById("prog-icon-wrap");
   const progTitle      = document.getElementById("prog-title");
   const progPct        = document.getElementById("prog-pct");
   const progBarFill    = document.getElementById("prog-bar-fill");
@@ -646,10 +646,8 @@ document.addEventListener("DOMContentLoaded", () => {
           updateStep("upload", "done");
 
           // Set progress icon to check
-          progIcon.classList.remove("spin");
-          progIcon.setAttribute("data-lucide", "check-circle-2");
-          progIcon.style.color = "#10b981";
-          lucide.createIcons();
+          if (progIconWrap) progIconWrap.innerHTML = `<i data-lucide="check-circle-2" style="width:14px;height:14px;color:#10b981;"></i>`;
+          if (window.lucide) lucide.createIcons();
 
           setTimeout(async () => {
             setDownloadState("idle");
@@ -694,10 +692,8 @@ document.addEventListener("DOMContentLoaded", () => {
     progStatus.textContent   = "Đang khởi tạo pipeline...";
     progTitle.textContent    = "Đang xử lý...";
     // Reset progress icon
-    progIcon.classList.add("spin");
-    progIcon.setAttribute("data-lucide", "loader");
-    progIcon.style.color = "var(--cyan)";
-    lucide.createIcons();
+    if (progIconWrap) progIconWrap.innerHTML = `<i data-lucide="loader" class="spin" style="width:14px;height:14px;color:var(--cyan);"></i>`;
+    if (window.lucide) lucide.createIcons();
     // Reset steps
     ["stac", "raster", "upload"].forEach(s => updateStep(s, "idle"));
   }
@@ -723,16 +719,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updateStep(stepName, state) {
-    const stepEl  = document.getElementById(`step-${stepName}`);
-    const iconEl  = document.getElementById(`step-${stepName}-status`);
-    if (!stepEl || !iconEl) return;
+    const stepEl = document.getElementById(`step-${stepName}`);
+    const wrapEl = document.getElementById(`step-${stepName}-status-wrap`);
+    if (!stepEl || !wrapEl) return;
 
     stepEl.className = `step step-${state}`;
     const iconMap = { idle: "circle", active: "loader", done: "check-circle-2", error: "alert-circle" };
-    iconEl.setAttribute("data-lucide", iconMap[state] || "circle");
-    if (state === "active") iconEl.classList.add("spin");
-    else iconEl.classList.remove("spin");
-    lucide.createIcons();
+    const iconName = iconMap[state] || "circle";
+    const isSpin = state === "active";
+    wrapEl.innerHTML = `<i data-lucide="${iconName}" class="step-status ${isSpin ? 'spin' : ''}" style="width:10px;height:10px;"></i>`;
+    if (window.lucide) lucide.createIcons();
   }
 
   function startElapsedTimer() {
@@ -771,13 +767,49 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // 11. KHỞI ĐỘNG
+  // 11. GỢI Ý NGÀY CÓ SẴN (STAC calendar / datalist)
+  // ═══════════════════════════════════════════════════════════════════
+
+  async function loadAvailableDates() {
+    try {
+      const today = new Date();
+      const res = await fetch(`/api/imagery/dates?year=${today.getFullYear()}&month=${today.getMonth() + 1}&max_cloud=40`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data.dates || data.dates.length === 0) return;
+
+      const datalist = document.getElementById("available-dates-list");
+      if (datalist) {
+        datalist.innerHTML = "";
+        data.dates.forEach(d => {
+          const opt = document.createElement("option");
+          opt.value = d.date;
+          opt.label = `${d.date} · Mây ${d.cloud_cover}% ${d.is_cached ? '💾 R2' : ''}`;
+          datalist.appendChild(opt);
+        });
+      }
+
+      // Pre-fill với ngày sạch nhất nếu có
+      const cleanPool = data.dates.filter(d => d.within_cloud_limit);
+      const pool = cleanPool.length > 0 ? cleanPool : data.dates;
+      const best = [...pool].sort((a, b) => a.cloud_cover - b.cloud_cover)[0];
+      if (best && dlDateInput) {
+        dlDateInput.value = best.date;
+      }
+    } catch (err) {
+      console.warn("Không tải được ngày gợi ý:", err);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 12. KHỞI ĐỘNG
   // ═══════════════════════════════════════════════════════════════════
 
   setDownloadState("idle");
   loadCatalog();
+  loadAvailableDates();
 
   // Khởi tạo tất cả Lucide icons
-  lucide.createIcons();
+  if (window.lucide) lucide.createIcons();
 
 });

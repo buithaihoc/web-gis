@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.4.0/ol.css">
   <script src="https://cdn.jsdelivr.net/npm/ol@v10.4.0/dist/ol.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="/static/styles/main.css">
+  <link rel="stylesheet" href="/static/styles/main.css?v=3.2">
 </head>
 <body>
 
@@ -30,7 +30,9 @@
 
   <!-- ═══════════════ DATE ALERT BANNER ═══════════════ -->
   <div id="date-alert-banner" class="date-alert-banner" style="display:none;">
-    <i data-lucide="calendar-x" id="date-alert-icon" style="width:14px;height:14px;flex-shrink:0;"></i>
+    <span id="date-alert-icon-wrap" style="display:inline-flex;align-items:center;flex-shrink:0;">
+      <i data-lucide="calendar-x" id="date-alert-icon" style="width:14px;height:14px;"></i>
+    </span>
     <span id="date-alert-text"></span>
     <button class="date-alert-close" onclick="document.getElementById('date-alert-banner').style.display='none'">
       <i data-lucide="x" style="width:12px;height:12px;"></i>
@@ -231,7 +233,8 @@
               <label class="form-label">Ngày muốn xem</label>
               <div class="input-with-icon">
                 <i data-lucide="calendar" style="width:14px;height:14px;color:var(--cyan);"></i>
-                <input type="date" id="dl-date-input" class="form-input">
+                <input type="date" id="dl-date-input" class="form-input" list="available-dates-list">
+                <datalist id="available-dates-list"></datalist>
               </div>
             </div>
 
@@ -294,7 +297,9 @@
             <div class="section">
               <div class="progress-header-row">
                 <div class="progress-label">
-                  <i data-lucide="loader" class="spin" id="prog-icon" style="width:14px;height:14px;color:var(--cyan);"></i>
+                  <span id="prog-icon-wrap" style="display:inline-flex;align-items:center;">
+                    <i data-lucide="loader" class="spin" id="prog-icon" style="width:14px;height:14px;color:var(--cyan);"></i>
+                  </span>
                   <span id="prog-title">Đang xử lý...</span>
                 </div>
                 <span id="prog-pct" class="mono-val" style="color:var(--cyan);">0%</span>
@@ -321,17 +326,23 @@
                 <div class="step" id="step-stac">
                   <i data-lucide="search" style="width:11px;height:11px;"></i>
                   <span>Tra cứu STAC</span>
-                  <i data-lucide="circle" class="step-status" id="step-stac-status" style="width:10px;height:10px;"></i>
+                  <span class="step-status-wrap" id="step-stac-status-wrap" style="margin-left:auto;display:inline-flex;align-items:center;">
+                    <i data-lucide="circle" class="step-status" id="step-stac-status" style="width:10px;height:10px;"></i>
+                  </span>
                 </div>
                 <div class="step" id="step-raster">
                   <i data-lucide="layers" style="width:11px;height:11px;"></i>
                   <span>Xử lý Raster</span>
-                  <i data-lucide="circle" class="step-status" id="step-raster-status" style="width:10px;height:10px;"></i>
+                  <span class="step-status-wrap" id="step-raster-status-wrap" style="margin-left:auto;display:inline-flex;align-items:center;">
+                    <i data-lucide="circle" class="step-status" id="step-raster-status" style="width:10px;height:10px;"></i>
+                  </span>
                 </div>
                 <div class="step" id="step-upload">
                   <i data-lucide="upload-cloud" style="width:11px;height:11px;"></i>
                   <span>Upload R2</span>
-                  <i data-lucide="circle" class="step-status" id="step-upload-status" style="width:10px;height:10px;"></i>
+                  <span class="step-status-wrap" id="step-upload-status-wrap" style="margin-left:auto;display:inline-flex;align-items:center;">
+                    <i data-lucide="circle" class="step-status" id="step-upload-status" style="width:10px;height:10px;"></i>
+                  </span>
                 </div>
               </div>
             </div>
@@ -347,7 +358,7 @@
   <!-- Toast container -->
   <div id="toast-container"></div>
 
-  <script src="/static/src/app.js"></script>
+  <script src="/static/src/app.js?v=3.2"></script>
   <script>lucide.createIcons();</script>
 </body>
 </html>

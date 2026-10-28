@@ -80,5 +80,5 @@ if frontend_dir:
     def serve_frontend_index():
         index_file = os.path.join(frontend_dir, "index.html")
         if os.path.exists(index_file):
-            return FileResponse(index_file)
+            return FileResponse(index_file, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
         return {"message": "Hanoi Satellite WebGIS Backend is running. Frontend index.html not found yet."}
